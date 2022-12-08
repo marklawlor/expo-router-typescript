@@ -1,0 +1,24 @@
+{
+  "name": "expo-router-typescript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marklawlor/expo-router-typescript.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marklawlor/expo-router-typescript/issues"
+  },
+  "homepage": "https://github.com/marklawlor/expo-router-typescript#readme",
+  "devDependencies": {
+    "@types/node": "^18.11.11",
+    "typescript": "^4.9.3"
+  }
+}
