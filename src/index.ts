@@ -98,10 +98,14 @@ function init(modules: {
                   firstTypeArgument && interfaceMap.get(firstTypeArgument);
 
                 if (firstTypeArgumentNode && routeInterface) {
-                  const { fileSingleParams } = getFileNameParams(fileName);
+                  const { fileSingleParams, fileSpreadParams } =
+                    getFileNameParams(fileName);
 
-                  const { interfaceSingleParams, invalidParams } =
-                    getInterfaceRouteParams(routeInterface);
+                  const {
+                    interfaceSingleParams,
+                    interfaceSpreadParams,
+                    invalidParams,
+                  } = getInterfaceRouteParams(routeInterface);
 
                   // Check for required file parameters
                   for (const fileSingleParam of fileSingleParams) {
@@ -117,6 +121,19 @@ function init(modules: {
                     }
                   }
 
+                  for (const fileSpreadParam of fileSpreadParams) {
+                    if (!interfaceSpreadParams.has(fileSpreadParam)) {
+                      prior.push({
+                        file: source,
+                        category: ts.DiagnosticCategory.Error,
+                        code: EXPO_TS_ERRORS.INVALID_PAGE_PROP,
+                        messageText: `Missing "${fileSpreadParam}" from route params.`,
+                        start: firstTypeArgumentNode.getStart(),
+                        length: firstTypeArgumentNode.getWidth(),
+                      });
+                    }
+                  }
+
                   // Check for invalid parameters
                   for (const interfaceSingleParam of interfaceSingleParams) {
                     if (!fileSingleParams.has(interfaceSingleParam)) {
@@ -125,6 +142,19 @@ function init(modules: {
                         category: ts.DiagnosticCategory.Error,
                         code: EXPO_TS_ERRORS.INVALID_PAGE_PROP,
                         messageText: `Attribute "${interfaceSingleParam}" is not found on the route.`,
+                        start: firstTypeArgumentNode.getStart(),
+                        length: firstTypeArgumentNode.getWidth(),
+                      });
+                    }
+                  }
+
+                  for (const interfaceSpreadParam of interfaceSpreadParams) {
+                    if (!fileSpreadParams.has(interfaceSpreadParam)) {
+                      prior.push({
+                        file: source,
+                        category: ts.DiagnosticCategory.Error,
+                        code: EXPO_TS_ERRORS.INVALID_PAGE_PROP,
+                        messageText: `Attribute "${interfaceSpreadParam}" is not found on the route.`,
                         start: firstTypeArgumentNode.getStart(),
                         length: firstTypeArgumentNode.getWidth(),
                       });
