@@ -24,27 +24,32 @@ export function createTSHelpers(
     return hasExportKeyword && hasDefaultKeyword;
   }
 
-  function getRouteInterfaceParams(typeElements: ts.TypeElement[]) {
-    const routeSingleParams = new Set<string>();
+  function getInterfaceRouteParams(typeElements: ts.TypeElement[]) {
+    const interfaceSingleParams = new Set<string>();
+    const invalidParams = new Set<string>();
     for (const node of typeElements) {
       if (ts.isPropertySignature(node)) {
         if (node.type && node.type.getText() === "string") {
-          routeSingleParams.add(node.name.getText());
+          interfaceSingleParams.add(node.name.getText());
+        } else {
+          invalidParams.add(node.name.getText());
         }
       }
     }
 
-    return { routeSingleParams };
+    return { interfaceSingleParams, invalidParams };
   }
 
-  return { isDefaultExport, getRouteInterfaceParams };
+  return { isDefaultExport, getInterfaceRouteParams };
 }
 
 export function getFileNameParams(fileName: string) {
-  const singleParams = [...fileName.matchAll(/\[(\w+)\]/g)].map((n) => n[1]);
-  const spreadParams = [...fileName.matchAll(/\[\.\.\.(\w+)\]/g)].map(
-    (n) => n[1]
+  const fileSingleParams = new Set(
+    [...fileName.matchAll(/\[(\w+)\]/g)].map((n) => n[1])
+  );
+  const fileSpreadParams = new Set(
+    [...fileName.matchAll(/\[\.\.\.(\w+)\]/g)].map((n) => n[1])
   );
 
-  return { singleParams, spreadParams };
+  return { fileSingleParams, fileSpreadParams };
 }

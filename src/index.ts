@@ -7,7 +7,7 @@ function init(modules: {
 }) {
   const ts = modules.typescript;
 
-  const { isDefaultExport, getRouteInterfaceParams } = createTSHelpers(ts);
+  const { isDefaultExport, getInterfaceRouteParams } = createTSHelpers(ts);
 
   function create(info: ts.server.PluginCreateInfo) {
     function log(...messages: string[]) {
@@ -45,8 +45,6 @@ function init(modules: {
     proxy.getSemanticDiagnostics = (fileName: string) => {
       const prior = info.languageService.getSemanticDiagnostics(fileName);
 
-      debugger;
-
       // Ensure this file is inside our `app/` directory
       if (!isRouteFile(fileName)) return prior;
 
@@ -58,7 +56,6 @@ function init(modules: {
 
       ts.forEachChild(source!, (node) => {
         if (ts.isInterfaceDeclaration(node)) {
-          debugger;
           interfaceMap.set(node.name.getText(), [...node.members]);
         } else if (ts.isFunctionDeclaration(node)) {
           // `export default function`
@@ -101,22 +98,48 @@ function init(modules: {
                   firstTypeArgument && interfaceMap.get(firstTypeArgument);
 
                 if (firstTypeArgumentNode && routeInterface) {
-                  const { singleParams } = getFileNameParams(fileName);
+                  const { fileSingleParams } = getFileNameParams(fileName);
 
-                  const { routeSingleParams } =
-                    getRouteInterfaceParams(routeInterface);
+                  const { interfaceSingleParams, invalidParams } =
+                    getInterfaceRouteParams(routeInterface);
 
-                  for (const singleParam of singleParams) {
-                    if (!routeSingleParams.has(singleParam)) {
+                  // Check for required file parameters
+                  for (const fileSingleParam of fileSingleParams) {
+                    if (!interfaceSingleParams.has(fileSingleParam)) {
                       prior.push({
                         file: source,
                         category: ts.DiagnosticCategory.Error,
                         code: EXPO_TS_ERRORS.INVALID_PAGE_PROP,
-                        messageText: `Missing "${singleParam}" from route params.`,
+                        messageText: `Missing "${fileSingleParam}" from route params.`,
                         start: firstTypeArgumentNode.getStart(),
                         length: firstTypeArgumentNode.getWidth(),
                       });
                     }
+                  }
+
+                  // Check for invalid parameters
+                  for (const interfaceSingleParam of interfaceSingleParams) {
+                    if (!fileSingleParams.has(interfaceSingleParam)) {
+                      prior.push({
+                        file: source,
+                        category: ts.DiagnosticCategory.Error,
+                        code: EXPO_TS_ERRORS.INVALID_PAGE_PROP,
+                        messageText: `Attribute "${interfaceSingleParam}" is not found on the route.`,
+                        start: firstTypeArgumentNode.getStart(),
+                        length: firstTypeArgumentNode.getWidth(),
+                      });
+                    }
+                  }
+
+                  for (const invalidParam of invalidParams) {
+                    prior.push({
+                      file: source,
+                      category: ts.DiagnosticCategory.Error,
+                      code: EXPO_TS_ERRORS.INVALID_PAGE_PROP,
+                      messageText: `Attribute "${invalidParam}" is not found on the route.`,
+                      start: firstTypeArgumentNode.getStart(),
+                      length: firstTypeArgumentNode.getWidth(),
+                    });
                   }
                 }
               }
