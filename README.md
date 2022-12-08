@@ -17,7 +17,8 @@ interface PageParams {
 }
 
 export default function BlogPost({ route }: RouteProps<PageParams>) {
-                                                    // ^? Missing "id" from route params.ts(72001)
+                                                    // ^? Missing "id" from route params.
+                                                    // ^? Attribute "id2" is not found on the route.
   return <Text>{route.params.id}</Text>;
 }
 ```
